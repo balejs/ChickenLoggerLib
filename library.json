@@ -1,0 +1,22 @@
+{
+  "name": "ChickenLoggerLib",
+  "version": "1.0.0",
+  "description": "ChickenWorld logging and error handling",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/balejs/ChickenLoggerLib.git"
+  },
+  "authors":
+  [
+    {
+      "name": "Marco Ballesio",
+      "email": "marco.ballesio@gmail.com"
+    }
+  ],
+  "license": "Proprietary",
+  "dependencies": [
+  ],
+  "frameworks": "espidf",
+  "platforms": "*"
+}
