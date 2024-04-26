@@ -78,7 +78,7 @@ void WebLogger::setupServer(std::shared_ptr<Chicken::HttpServer> server)
     });
 }
 
-void WebLogger::setupPowerManager(std::shared_ptr<PowerManager> powerManager)
+void WebLogger::setupPowerManager(std::shared_ptr<Chicken::PowerManager> powerManager)
 {
   this->pm = powerManager;
 }

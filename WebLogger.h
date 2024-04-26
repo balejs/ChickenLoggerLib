@@ -10,11 +10,11 @@ class WebLogger: public SessionComponent
 
     protected:
     void setupServer(std::shared_ptr<Chicken::HttpServer> server);
-    void setupPowerManager(std::shared_ptr<PowerManager> powerManager);
+    void setupPowerManager(std::shared_ptr<Chicken::PowerManager> powerManager);
 
     private:
     std::shared_ptr<Chicken::HttpServer> server;
-    std::shared_ptr<PowerManager> pm;
+    std::shared_ptr<Chicken::PowerManager> pm;
 };
 
 #endif //__WEB_LOGGER_H__
