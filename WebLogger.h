@@ -3,18 +3,27 @@
 
 #include <Interfaces.h>
 
+// TODO: these two dependencies aren't tracked by library.json
+// split weblogger into its own library
+#include <HttpServer.h>
+#include <PowerManager.h>
+
+namespace Chicken
+{
+    
 class WebLogger: public SessionComponent
 {
     public:
     WebLogger();
 
     protected:
-    void setupServer(std::shared_ptr<Chicken::HttpServer> server);
-    void setupPowerManager(std::shared_ptr<Chicken::PowerManager> powerManager);
+    void setupServer(SHttpServer server);
+    void setupPowerManager(SPowerManager powerManager);
 
     private:
-    std::shared_ptr<Chicken::HttpServer> server;
-    std::shared_ptr<Chicken::PowerManager> pm;
+    SHttpServer _server;
+    SPowerManager _powerManager;
 };
+}
 
 #endif //__WEB_LOGGER_H__

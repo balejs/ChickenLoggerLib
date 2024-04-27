@@ -49,23 +49,26 @@ const char * logPage = R"====(
   </body>
 </html>)====";
 
+namespace Chicken
+{
+
 WebLogger::WebLogger()
 {
-    server = nullptr;
-    pm = nullptr;
+    _server = nullptr;
+    _powerManager = nullptr;
 }
 
 void WebLogger::setupServer(std::shared_ptr<Chicken::HttpServer> server)
 {
-    this->server = server;
+    this->_server = server;
 
-    server->addUriHandler("/logs", HTTP_GET, [](ChickenReq request) -> esp_err_t
+    server->addUriHandler("/logs", HTTP_GET, [](SHttpRequest request) -> esp_err_t
     {
         request->addToResponse(logPage, HTTPD_200, HTTPD_TYPE_TEXT, true);
         return ESP_OK;
     });
 
-    server->addUriHandler("/readLogs", HTTP_GET, [](ChickenReq request) -> esp_err_t
+    server->addUriHandler("/readLogs", HTTP_GET, [](SHttpRequest request) -> esp_err_t
     {
       std::string * logBuffer = Logger::getLogger()->getLog();
       if (logBuffer != NULL) {
@@ -80,5 +83,6 @@ void WebLogger::setupServer(std::shared_ptr<Chicken::HttpServer> server)
 
 void WebLogger::setupPowerManager(std::shared_ptr<Chicken::PowerManager> powerManager)
 {
-  this->pm = powerManager;
+  this->_powerManager = powerManager;
 }
+} // namespace Chicken
