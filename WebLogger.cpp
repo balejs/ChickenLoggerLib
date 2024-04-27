@@ -52,23 +52,17 @@ const char * logPage = R"====(
 namespace Chicken
 {
 
-WebLogger::WebLogger()
+void WebLogger::setupServer(std::any httpServer)
 {
-    _server = nullptr;
-    _powerManager = nullptr;
-}
+    _httpServer = sharedPtr<HttpServer>(httpServer);
 
-void WebLogger::setupServer(std::shared_ptr<Chicken::HttpServer> server)
-{
-    this->_server = server;
-
-    server->addUriHandler("/logs", HTTP_GET, [](SHttpRequest request) -> esp_err_t
+    _httpServer->addUriHandler("/logs", HTTP_GET, [](SHttpRequest request) -> esp_err_t
     {
         request->addToResponse(logPage, HTTPD_200, HTTPD_TYPE_TEXT, true);
         return ESP_OK;
     });
 
-    server->addUriHandler("/readLogs", HTTP_GET, [](SHttpRequest request) -> esp_err_t
+    _httpServer->addUriHandler("/readLogs", HTTP_GET, [](SHttpRequest request) -> esp_err_t
     {
       std::string * logBuffer = Logger::getLogger()->getLog();
       if (logBuffer != NULL) {

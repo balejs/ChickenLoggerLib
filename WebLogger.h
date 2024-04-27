@@ -7,6 +7,7 @@
 // split weblogger into its own library
 #include <HttpServer.h>
 #include <PowerManager.h>
+#include <SessionListener.h>
 
 namespace Chicken
 {
@@ -14,14 +15,13 @@ namespace Chicken
 class WebLogger: public SessionComponent
 {
     public:
-    WebLogger();
 
     protected:
-    void setupServer(SHttpServer server);
+    void setupServer(Any server);
     void setupPowerManager(SPowerManager powerManager);
 
     private:
-    SHttpServer _server;
+    SHttpServer _httpServer;
     SPowerManager _powerManager;
 };
 }
