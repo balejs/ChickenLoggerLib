@@ -2,17 +2,18 @@
 #include "freertos/semphr.h"
 #include <memory>
 
-#include <DebugFuncs.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
 
 #include <esp_log.h>
+#include <Logger.h>
 
 // Drop oldest logs once buffer reaches this size
 #define LOGGER_MAX_BUFFER_SIZE (512)
 
+// TODO: replace  with std::lock
 class SpinLock
 {
     portMUX_TYPE spinLock;
@@ -35,7 +36,7 @@ int Logger::logVaList(const char* fmt, va_list origArgs)
     serial_log(fmt, copyArgs);
     va_end(copyArgs);
 #endif //CHICKENWORLD_LOG_TO_SERIAL
-    return logger->_log(fmt, origArgs);
+    return logger->logToInternalBuffer(fmt, origArgs);
 }
 
 void Logger::initLogs()
@@ -71,7 +72,7 @@ std::string * Logger::getLog()
 }
 
 // TODO: use Chicken::Str in place of std::string
-int Logger::_log(const char *fmt, va_list args)
+int Logger::logToInternalBuffer(const char *fmt, va_list args)
 {
     char * tmpString = NULL;
 
@@ -98,4 +99,33 @@ int Logger::_log(const char *fmt, va_list args)
     buffer.exchange(targetString);
 
     return writtenSize;
+}
+
+// TODO: this is still work in progress
+std::shared_ptr<char> __classname(const char * prettyfunc)
+{
+    char * begin = strstr(prettyfunc, " "); // this to remove possible return values
+    char * end = strstr(prettyfunc, "::"); // remove the function prototype to reduce clutter
+
+    if (begin == NULL || begin >= end)
+    {
+        begin = (char *) prettyfunc;
+    }
+    else
+    {
+        begin ++;
+    }
+
+    std::shared_ptr<char> className = nullptr;
+
+    if (end == NULL)
+    {
+        end = begin;
+    }
+
+    className = std::shared_ptr<char>(new char[end - begin + 1]);
+    memcpy(className.get(), begin, end - begin);
+    className.get()[end - begin] = '\0';
+
+    return className;
 }

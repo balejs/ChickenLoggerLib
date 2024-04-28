@@ -6,7 +6,7 @@
 #define TAG "WebLogger"
 #endif
 
-#include <DebugFuncs.h>
+#include <Utilities.h>
 
 const char * logPage = R"====(
 <!DOCTYPE HTML>
