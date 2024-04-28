@@ -27,7 +27,7 @@
 std::shared_ptr<char> __classname(const char * prettyfunc);
 
 // Logs without adding a newline, useful to begin a line with complex logging
-#define _log(type, format, ...) Logger::logPrintf(CHICKEN_BASIC_LOG_FORMAT(type, format), esp_log_system_timestamp(), __classname(__PRETTY_FUNC__), ##__VA_ARGS__)
+#define _log(type, format, ...) Logger::logPrintf(CHICKEN_BASIC_LOG_FORMAT(type, format), esp_log_system_timestamp(), __classname(__PRETTY_FUNCTION__), ##__VA_ARGS__)
 
 // Appends to the current line. Does not append a '\n' automatically
 #define _logappend(format, ...) Logger::logPrintf(format, ##__VAR_ARGS__)
