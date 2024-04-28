@@ -6,10 +6,10 @@
 #include <atomic>
 #include <memory>
 
-#define CHICKEN_LOG_LEVEL_DEBUG (4)
-#define CHICKEN_LOG_LEVEL_INFO (3)
+#define CHICKEN_LOG_LEVEL_DEBUG   (4)
+#define CHICKEN_LOG_LEVEL_INFO    (3)
 #define CHICKEN_LOG_LEVEL_WARNING (2)
-#define CHICKEN_LOG_LEVEL_ERROR (1)
+#define CHICKEN_LOG_LEVEL_ERROR   (1)
 
 #ifndef CHICKEN_LOG_LEVEL
 #define CHICKEN_LOG_LEVEL 1

@@ -1,11 +1,6 @@
 #include <HttpServer.h>
 #include <LoopScheduler.h>
 #include <WebLogger.h>
-
-#if (WEBLOGGER_LOG_LEVEL > 0)
-#define TAG "WebLogger"
-#endif
-
 #include <Utilities.h>
 
 const char * logPage = R"====(
