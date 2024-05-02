@@ -1,8 +1,6 @@
 #ifndef __WEB_LOGGER_H__
 #define __WEB_LOGGER_H__
 
-#include <Interfaces.h>
-
 // TODO: these two dependencies aren't tracked by library.json
 // split weblogger into its own library
 #include <HttpServer.h>
