@@ -54,7 +54,7 @@ std::string log_classname(const char * prettyfunc);
 }
 
 // Appends to the current line. Does not append a '\n' automatically
-#define _logappend(format, ...) Logger::log(format, ##__VAR_ARGS__)
+#define _logappend(format, ...) Logger::getLogger()->log(format, ##__VA_ARGS__)
 
 // Logs with automatic newline
 #if CHICKEN_LOG_LEVEL >= CHICKEN_LOG_LEVEL_DEBUG

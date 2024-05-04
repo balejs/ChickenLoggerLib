@@ -13,7 +13,6 @@ class TestLoggerListener: public LoggerListener
     virtual void newLogEntry(SLoggerEntry entry)
     {
         _entries.push(entry);
-        std::cout << entry;
     }
 
     SLoggerEntry getEntry()
@@ -57,6 +56,14 @@ void test_logger()
 
     TEST_ASSERT_NOT_EQUAL_MESSAGE(nullptr, entry, "No log buffer");
     TEST_ASSERT_NOT_EQUAL_MESSAGE(entry->npos, entry->find("Test log string"), "Entry does not match");
+
+    _logappend("Testing");
+    _logappend(" log");
+    _logappend(" append\n");
+
+    entry = testLoggerListener->getEntry();
+    std::cout << "Got entry: >" << *entry << "<\n";
+    TEST_ASSERT_NOT_EQUAL_MESSAGE(true, *entry == "Testing", "Appended entry does not match (got %s)");
 }
 
 extern "C" void app_main(void)
