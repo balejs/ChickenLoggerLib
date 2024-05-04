@@ -6,7 +6,6 @@
 #endif // ESP_PLATFORM
 
 #include <string>
-#include <atomic>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -51,7 +50,7 @@ std::string log_classname(const char * prettyfunc);
 #define _log(type, format, ...) { \
     auto __timeString = log_time(); \
     auto __className = log_classname(__PRETTY_FUNCTION__); \
-    Logger::getLogger()->doLog(CHICKEN_BASIC_LOG_FORMAT(type, format), __timeString.c_str(), __className.c_str(), ##__VA_ARGS__); \
+    Logger::getLogger()->log(CHICKEN_BASIC_LOG_FORMAT(type, format), __timeString.c_str(), __className.c_str(), ##__VA_ARGS__); \
 }
 
 // Appends to the current line. Does not append a '\n' automatically
@@ -117,10 +116,11 @@ class Logger
         static Logger* getLogger() { return _logger; }
 
         // @brief printf-like logging function
-        int doLog(const char *fmt, ...) {
+        int log(const char *fmt, ...)
+        {
             va_list a;
             va_start(a, fmt);
-            int count = doLogVariadic(fmt, a);
+            int count = variadicLog(fmt, a);
             va_end(a);
             return count;
         }
@@ -128,7 +128,7 @@ class Logger
         // @brief log to Logger va_list style
         // @details Logs to serial if CHICKEN_LOG_TO_SYSTEM is specified, then also passes the
         // formatted data to all registered listeners
-        int doLogVariadic(const char* fmt, va_list args);
+        int variadicLog(const char* fmt, va_list args);
 
         void addListener(SLoggerListener listener);
         void removeListener(SLoggerListener listener);
@@ -143,7 +143,8 @@ class Logger
         // Singleton
         static Logger *_logger;
 
-        // TODO: could probably do without mutex and listener vector.. maybe an atomic linked list
+        // TODO: could probably do without mutex, as long as all listeners are added
+        // during the initialization phase
         std::mutex _mutex;
         std::vector<SLoggerListener> _listeners;
 
@@ -151,6 +152,8 @@ class Logger
         // Handler to capture all logs
         SystemLogger _systemLogger;
 #endif //CHICKEN_LOG_TO_SYSTEM
+
+        static int staticVariadicLog(const char * fmt, va_list args) { return getLogger()->variadicLog(fmt, args); }
 };
 
 // @brief Listener to logging events

@@ -1,12 +1,7 @@
+#include <algorithm>
 #include <memory>
 #include <chrono>
-#include <format>
 #include <iomanip>
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
 
 #include <Logger.h>
 
@@ -61,13 +56,13 @@ Logger::Logger()
     _systemLogger = 
 #endif //CHICKEN_LOG_TO_SYSTEM
     // Capture system logs
-    esp_log_set_vprintf(logVaList);
+    esp_log_set_vprintf(staticVariadicLog);
 #else // Not embedded platform
     _systemLogger = vprintf;
 #endif // ESP_PLATFORM
 }
 
-int Logger::doLogVariadic(const char* fmt, va_list args)
+int Logger::variadicLog(const char* fmt, va_list args)
 {
     int systemRet = 0;
 
@@ -106,7 +101,7 @@ void Logger::removeListener(SLoggerListener listener)
 {
     std::unique_lock<std::mutex> lock(_mutex);
 
-    _listeners.erase(std::remove(_listeners.begin(), _listeners.end(), listener));
+    _listeners.erase(std::find(_listeners.begin(), _listeners.end(), listener));
 }
 
 int Logger::logToListeners(const char * fmt, va_list args)
