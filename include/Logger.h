@@ -1,15 +1,35 @@
 #ifndef __LOGGER_H__
 #define __LOGGER_H__
 
+#ifdef ESP_PLATFORM
 #include <esp_log.h>
+#endif // ESP_PLATFORM
+
 #include <string>
 #include <atomic>
 #include <memory>
+#include <mutex>
+#include <vector>
+
+// Enable logging to system device (printf for native, serial for embedded)
+#define CHICKEN_LOG_TO_SYSTEM 1
 
 #define CHICKEN_LOG_LEVEL_DEBUG   (4)
 #define CHICKEN_LOG_LEVEL_INFO    (3)
 #define CHICKEN_LOG_LEVEL_WARNING (2)
 #define CHICKEN_LOG_LEVEL_ERROR   (1)
+
+#define CHICKEN_LOG_COLOR_RED    "\033[1;31m"
+#define CHICKEN_LOG_COLOR_GREEN  "\033[1;32m"
+#define CHICKEN_LOG_COLOR_YELLOW "\033[1;33m"
+#define CHICKEN_LOG_COLOR_CYAN   "\033[1;36m"
+#define CHICKEN_LOG_COLOR_WHITE  "\033[1;37m"
+#define CHICKEN_LOG_COLOR_RESET  "\033[1;0m"
+
+#define CHICKEN_LOG_COLOR_E CHICKEN_LOG_COLOR_RED
+#define CHICKEN_LOG_COLOR_W CHICKEN_LOG_COLOR_YELLOW
+#define CHICKEN_LOG_COLOR_I CHICKEN_LOG_COLOR_CYAN
+#define CHICKEN_LOG_COLOR_D CHICKEN_LOG_COLOR_GREEN
 
 #ifndef CHICKEN_LOG_LEVEL
 #define CHICKEN_LOG_LEVEL 1
@@ -18,16 +38,19 @@
 // Macro that can be used for debug-only code other than logs
 #define CHICKEN_DO_DEBUG
 
-// TODO: redefine LOG_COLOR_X macros
+std::string log_time();
+// Extracts the class name from a string generated with __PRETTY_FUNCTION__
+std::string log_classname(const char * prettyfunc);
 
 // Log format
-#define CHICKEN_BASIC_LOG_FORMAT(letter, format) LOG_COLOR_##letter #letter " (%s) %s: " format LOG_RESET_COLOR
-
-// Extracts the class name from a string generated with __PRETTY_FUNCTION__
-std::shared_ptr<char> __classname(const char * prettyfunc);
+#define CHICKEN_BASIC_LOG_FORMAT(letter, format) CHICKEN_LOG_COLOR_##letter #letter " [%s] %s: " format CHICKEN_LOG_COLOR_RESET
 
 // Logs without adding a newline, useful to begin a line with complex logging
-#define _log(type, format, ...) Logger::logPrintf(CHICKEN_BASIC_LOG_FORMAT(type, format), esp_log_system_timestamp(), __classname(__PRETTY_FUNCTION__), ##__VA_ARGS__)
+#define _log(type, format, ...) { \
+    auto __timeString = log_time(); \
+    auto __className = log_classname(__PRETTY_FUNCTION__); \
+    Logger::getLogger()->doLog(CHICKEN_BASIC_LOG_FORMAT(type, format), __timeString.c_str(), __className.c_str(), ##__VA_ARGS__); \
+}
 
 // Appends to the current line. Does not append a '\n' automatically
 #define _logappend(format, ...) Logger::logPrintf(format, ##__VAR_ARGS__)
@@ -57,7 +80,24 @@ std::shared_ptr<char> __classname(const char * prettyfunc);
 #define _loge(format, ...)
 #endif
 
-class Logger;
+// @brief std::string_view subclass with data ownership
+// @details Automatically deallocates the referenced data on destruction
+class LoggerEntry: public std::string_view
+{
+    public:
+    // @brief allocates the memory necessary for the formatted string and formats it
+    LoggerEntry(const char* format, va_list args): std::string_view(formattedString(format, args)) {};
+    ~LoggerEntry();
+
+    private:
+    char * formattedString(const char * format, va_list args);
+};
+
+typedef std::shared_ptr<LoggerEntry> SLoggerEntry;
+#define MakeLoggerEntry(...) std::make_shared<LoggerEntry>(__VA_ARGS__);
+
+class LoggerListener; // forward declaration
+typedef std::shared_ptr<LoggerListener> SLoggerListener;
 
 // @brief Basic logging class with capabilities to output to different destinations
 // @details once initialized, the logger captures all logs from the system, and redirects them
@@ -66,47 +106,60 @@ class Logger;
 class Logger
 {
     public:
-        // @brief capture system logs to intrnal buffering
-        static void initLogs();
-        static Logger* getLogger() { return logger; }
+        typedef int (*SystemLogger)(const char*, va_list);
 
-        // @brief Log to serial
-        // @details if CHICKENWORLD_LOG_TO_SERIAL is defined, the input arguments are converted printf-like
-        // and dumped to serial
-        static int toSerial(const char * fmt, ...);
+        // @brief prepare system resources to handle logging
+        static void initLogs();
+
+        // @return logger singleton
+        static Logger* getLogger() { return _logger; }
 
         // @brief printf-like logging function
-        static int logPrintf(const char *fmt, ...) {
+        int doLog(const char *fmt, ...) {
             va_list a;
             va_start(a, fmt);
-            int count = logVaList(fmt, a);
+            int count = doLogVariadic(fmt, a);
             va_end(a);
             return count;
         }
 
-        // @brief Returns the logging buffer and transfers its ownership
-        // @details Caller acquires ownership of returned string, has to delete() it
-        std::string * getLog();
-
         // @brief log to Logger va_list style
-        // @details Logs to serial if CHICKENWORLD_LOG_TO_SERIAL is specified, then also stores
-        // data into the internal logging buffer
-        static int logVaList(const char*, va_list);
+        // @details Logs to serial if CHICKEN_LOG_TO_SYSTEM is specified, then also passes the
+        // formatted data to all registered listeners
+        int doLogVariadic(const char* fmt, va_list args);
+
+        void addListener(SLoggerListener listener);
+        void removeListener(SLoggerListener listener);
+
+        // @brief formats the output string and notifies all the listeners
+        // @return the number of chars in the formatted string
+        int logToListeners(const char * fmt, va_list args);
 
     private:
         Logger();
 
         // Singleton
-        static Logger *logger;
-#if CHICKENWORLD_LOG_TO_SERIAL
-        static vprintf_like_t serial_log;
-#endif //CHICKENWORLD_LOG_TO_SERIAL
+        static Logger *_logger;
 
-        // Buffer containing the current log data
-        std::atomic<std::string *> buffer;
+        // TODO: could probably do without mutex and listener vector.. maybe an atomic linked list
+        std::mutex _mutex;
+        std::vector<SLoggerListener> _listeners;
 
-        // @brief Log data to internal buffer
-        int logToInternalBuffer(const char *fmt, va_list a);
+#if CHICKEN_LOG_TO_SYSTEM
+        // Handler to capture all logs
+        SystemLogger _systemLogger;
+#endif //CHICKEN_LOG_TO_SYSTEM
+};
+
+// @brief Listener to logging events
+// @details Can be used to route system logs to different destinations, like f.e. telnet or web pages
+class LoggerListener
+{
+    public:
+
+    // @brief notification that a new log entry is available
+    // @warning do not call logging macros/functions (f.e. _logi) from within this method
+    virtual void newLogEntry(SLoggerEntry entry) = 0;
 };
 
 #endif //__LOGGER_H__
