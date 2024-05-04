@@ -17,6 +17,6 @@
   "license": "Proprietary",
   "dependencies": [
   ],
-  "frameworks": "espidf",
+  "frameworks": "*",
   "platforms": "*"
 }
