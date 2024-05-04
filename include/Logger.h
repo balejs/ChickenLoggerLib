@@ -11,8 +11,10 @@
 #include <mutex>
 #include <vector>
 
+#ifndef CHICKEN_LOG_TO_SYSTEM
 // Enable logging to system device (printf for native, serial for embedded)
 #define CHICKEN_LOG_TO_SYSTEM 1
+#endif // CHICKEN_LOG_TO_SYSTEM
 
 #define CHICKEN_LOG_LEVEL_DEBUG   (4)
 #define CHICKEN_LOG_LEVEL_INFO    (3)
