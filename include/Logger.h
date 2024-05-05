@@ -36,8 +36,10 @@
 #define CHICKEN_LOG_LEVEL 1
 #endif
 
+#if CHICKEN_LOG_LEVEL > 0
 // Macro that can be used for debug-only code other than logs
 #define CHICKEN_DO_DEBUG
+#endif // CHICKEN_LOG_LEVEL > 0
 
 std::string log_time();
 // Extracts the class name from a string generated with __PRETTY_FUNCTION__
