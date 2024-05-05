@@ -62,8 +62,7 @@ void test_logger()
     _logappend(" append\n");
 
     entry = testLoggerListener->getEntry();
-    std::cout << "Got entry: >" << *entry << "<\n";
-    TEST_ASSERT_NOT_EQUAL_MESSAGE(true, *entry == "Testing", "Appended entry does not match (got %s)");
+    TEST_ASSERT_EQUAL_MESSAGE(true, *entry == "Testing", "Appended entry does not match");
 }
 
 extern "C" void app_main(void)
