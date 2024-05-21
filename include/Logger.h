@@ -43,7 +43,7 @@ void logBacktrace();
 
 std::string logTime();
 // Extracts the class name from a string generated with __PRETTY_FUNCTION__
-std::string logClassname(const char * prettyfunc);
+std::string logClassnameOrFunction(const char * prettyfunc);
 
 // Log format
 #define CHICKEN_BASIC_LOG_FORMAT(letter, format) CHICKEN_LOG_COLOR_##letter #letter " [%s] %s: " format CHICKEN_LOG_COLOR_RESET
@@ -51,7 +51,7 @@ std::string logClassname(const char * prettyfunc);
 // Logs without adding a newline, useful to begin a line with complex logging
 #define _log(type, format, ...) { \
     auto __timeString = logTime(); \
-    auto __className = logClassname(__PRETTY_FUNCTION__); \
+    auto __className = logClassnameOrFunction(__PRETTY_FUNCTION__); \
     Logger::getLogger()->log(CHICKEN_BASIC_LOG_FORMAT(type, format), __timeString.c_str(), __className.c_str(), ##__VA_ARGS__); \
 }
 

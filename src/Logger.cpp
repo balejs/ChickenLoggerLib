@@ -54,56 +54,71 @@ std::string logTime()
 }
 
 // TODO: this is still work in progress
-std::string logClassname(const char * prettyfunc)
+std::string logClassnameOrFunction(const char * prettyfunc)
 {
     std::string prettyStr(prettyfunc);
 
-    // Check if it's a template first
-    size_t templateMark = prettyStr.find("<");
-
     // Remove everything up to "Chicken::" if present
-    size_t begin = prettyStr.find("Chicken::");
+    size_t namespaceBegin = prettyStr.find("Chicken::");
+    size_t retBegin = 0;
 
-    if (begin == prettyStr.npos || begin > templateMark)
+    if (namespaceBegin == prettyStr.npos)
     {
         // A whitespace should be present at the end of the return type, except for structors
-        begin = prettyStr.find(" ") + 1;
+        retBegin = prettyStr.find(" ") + 1;
+
+        if (retBegin == prettyStr.npos)
+        {
+            retBegin = 0;
+        }
     }
     else
     {
-        begin += 9;
+        retBegin = namespaceBegin + 9;
     }
 
-    // Remove everything after the begin fo the argument list
-    size_t end = templateMark == prettyStr.npos ? prettyStr.find("::", begin) : templateMark;
+    // If this is a class method, the name of the class will end at the next "::"
+    size_t retEnd = prettyStr.find("::", retBegin);
+
+    // Check if it's a template, remove the template arguments
+    size_t templateArgsBegin = prettyStr.find("<", retBegin);
+    if (templateArgsBegin < retEnd)
+    {
+        retEnd = templateArgsBegin;
+    }
+
+    // This should handle simple functions (no class name) and excise the arguments list from them
+    size_t argumentsStart = prettyStr.find("(", retBegin);
     
-    if (end == prettyStr.npos)
+    if (argumentsStart < retEnd)
     {
-        end = prettyStr.find("(");
+        // If no end was found, cut the string to where the arguments begin
+        retEnd = argumentsStart;
     }
 
-    // the " <" is to avoid a false detection of a space at the end of a template
-    if (begin == prettyStr.npos || begin > end)
+    // Begin at beginning of pretty function if no begin was found
+    if (retBegin == prettyStr.npos || retBegin > retEnd)
     {
-        begin = 0;
+        retBegin = 0;
     }
 
-    if (end == prettyStr.npos)
+    if (retEnd == prettyStr.npos)
     {
         // This should probably never happen
-        end = prettyStr.length();
+        retEnd = prettyStr.length();
     }
 
-    size_t whitespacePos = prettyStr.find(" ", begin);
+    // Cut away stray tokens from the beginning
+    size_t whitespacePos = prettyStr.find(" ", retBegin);
 
     // Weed out possible additional whitespaces
-    while (whitespacePos != prettyStr.npos && whitespacePos < end)
+    while (whitespacePos != prettyStr.npos && whitespacePos < retEnd)
     {
-        begin = whitespacePos + 1;
-        whitespacePos = prettyStr.find(" ", begin);
+        retBegin = whitespacePos + 1;
+        whitespacePos = prettyStr.find(" ", retBegin);
     }
 
-    return prettyStr.substr(begin, end - begin);
+    return prettyStr.substr(retBegin, retEnd - retBegin);// + "[" + prettyStr + "]";
 }
 
 Logger *Logger::_logger;
