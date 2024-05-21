@@ -1,3 +1,7 @@
+#ifdef NATIVE_PLATFORM
+#include <execinfo.h>
+#endif // NATIVE_PLATFORM
+
 #include <algorithm>
 #include <memory>
 #include <chrono>
@@ -5,8 +9,37 @@
 
 #include <Logger.h>
 
+#define BACKTRACE_DEPTH (10)
+
+void logBacktrace()
+{
+#ifdef CHICKEN_LOG_BACKTRACES
+#ifdef NATIVE_PLATFORM
+    void * backtraceEntries[BACKTRACE_DEPTH];
+    char ** backtraceLines;
+
+    int depth = backtrace(backtraceEntries, BACKTRACE_DEPTH);
+    backtraceLines = backtrace_symbols(backtraceEntries, depth);
+
+    if (backtraceLines == NULL)
+    {
+        return;
+    }
+
+    for (int i = 0; i < depth; i++)
+    {
+        Logger::getLogger()->log("%s\n", backtraceLines[i]);
+    }
+
+    free (backtraceLines);
+#elif defined (ESP_PLATFORM)
+    esp_backtrace_print(BACKTRACE_DEPTH);
+#endif // ESP_PLATFORM
+#endif // CHICKEN_LOG_BACKTRACES
+}
+
 // The return string is move constructed
-std::string log_time()
+std::string logTime()
 {
     auto timePointNow = std::chrono::system_clock::now();
     auto timeTNow = std::chrono::system_clock::to_time_t(timePointNow);
@@ -21,27 +54,53 @@ std::string log_time()
 }
 
 // TODO: this is still work in progress
-std::string log_classname(const char * prettyfunc)
+std::string logClassname(const char * prettyfunc)
 {
     std::string prettyStr(prettyfunc);
 
-    size_t begin = prettyStr.find(" ");
+    // Check if it's a template first
+    size_t templateMark = prettyStr.find("<");
 
-    if (begin == prettyStr.npos)
+    // Remove everything up to "Chicken::" if present
+    size_t begin = prettyStr.find("Chicken::");
+
+    if (begin == prettyStr.npos || begin > templateMark)
+    {
+        // A whitespace should be present at the end of the return type, except for structors
+        begin = prettyStr.find(" ") + 1;
+    }
+    else
+    {
+        begin += 9;
+    }
+
+    // Remove everything after the begin fo the argument list
+    size_t end = templateMark == prettyStr.npos ? prettyStr.find("::", begin) : templateMark;
+    
+    if (end == prettyStr.npos)
+    {
+        end = prettyStr.find("(");
+    }
+
+    // the " <" is to avoid a false detection of a space at the end of a template
+    if (begin == prettyStr.npos || begin > end)
     {
         begin = 0;
     }
 
-    size_t end = prettyStr.find("::", begin);
-
-    if (begin != 0)
-    {
-        begin ++; // begins at the char after the space
-    }
-
     if (end == prettyStr.npos)
     {
-        end = begin;
+        // This should probably never happen
+        end = prettyStr.length();
+    }
+
+    size_t whitespacePos = prettyStr.find(" ", begin);
+
+    // Weed out possible additional whitespaces
+    while (whitespacePos != prettyStr.npos && whitespacePos < end)
+    {
+        begin = whitespacePos + 1;
+        whitespacePos = prettyStr.find(" ", begin);
     }
 
     return prettyStr.substr(begin, end - begin);
