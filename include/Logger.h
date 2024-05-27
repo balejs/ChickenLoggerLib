@@ -1,10 +1,11 @@
 #ifndef __LOGGER_H__
 #define __LOGGER_H__
 
-#include <string>
+#include <cstdarg>
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <string>
 
 #ifndef CHICKEN_LOG_TO_SYSTEM
 // Enable logging to system device (printf for native, serial for embedded)
