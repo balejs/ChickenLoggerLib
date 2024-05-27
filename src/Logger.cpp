@@ -1,4 +1,7 @@
-#ifdef NATIVE_PLATFORM
+#ifdef ESP_PLATFORM
+#include "esp_debug_helpers.h"
+#include "esp_log.h"
+#elif defined(NATIVE_PLATFORM)
 #include <execinfo.h>
 #endif // NATIVE_PLATFORM
 
