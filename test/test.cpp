@@ -6,6 +6,8 @@
 
 #include <unity.h> // goes last else it clashes with c ++ definitions
 
+using namespace std;
+
 class TestLoggerListener: public LoggerListener
 {
     public:
@@ -61,8 +63,25 @@ void test_logger()
     _logappend(" log");
     _logappend(" append\n");
 
+    TEST_ASSERT_EQUAL(true, *testLoggerListener->getEntry() == "Testing");
+    TEST_ASSERT_EQUAL(true, *testLoggerListener->getEntry() == " log");
+    TEST_ASSERT_EQUAL(true, *testLoggerListener->getEntry() == " append\n");
+    
+    _logd("test %d %s %x %p", 1, "test", 0x1234, NULL);
     entry = testLoggerListener->getEntry();
-    TEST_ASSERT_EQUAL_MESSAGE(true, *entry == "Testing", "Appended entry does not match");
+    TEST_ASSERT_FALSE(entry->find("test_logger: test 1 test 1234 0x0") == string_view::npos);
+
+    _logi("test %d %s %x %p", 1, "test", 0x1234, NULL);
+    entry = testLoggerListener->getEntry();
+    TEST_ASSERT_FALSE(entry->find("test_logger: test 1 test 1234 0x0") == string_view::npos);
+
+    _logw("test %d %s %x %p", 1, "test", 0x1234, NULL);
+    entry = testLoggerListener->getEntry();
+    TEST_ASSERT_FALSE(entry->find("test_logger: test 1 test 1234 0x0") == string_view::npos);
+
+    _loge("test %d %s %x %p", 1, "test", 0x1234, NULL);
+    entry = testLoggerListener->getEntry();
+    TEST_ASSERT_FALSE(entry->find("test_logger: test 1 test 1234 0x0") == string_view::npos);
 }
 
 extern "C" void app_main(void)
