@@ -42,18 +42,17 @@ void logBacktrace()
 }
 
 // The return string is move constructed
-std::string logTime()
+const char * logTime()
 {
-    auto timePointNow = std::chrono::system_clock::now();
-    auto timeTNow = std::chrono::system_clock::to_time_t(timePointNow);
+    static char timeBuffer[15];
 
-    // For some undoubtedly wise reasons the geniuses that defin the standard decided that second accuracy is good
-    // for everyone.
-    auto milliSeconds = duration_cast<std::chrono::milliseconds>(timePointNow.time_since_epoch()) % 1000;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    struct tm currentLocalTime = *localtime(&tv.tv_sec);
 
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&timeTNow), "%X") << '.' << milliSeconds.count();
-    return ss.str();
+    strftime(timeBuffer, 15, "%H:%M:%S.", &currentLocalTime);
+    snprintf(timeBuffer + 9, 4, "%03lu", tv.tv_usec / 1000);
+    return timeBuffer;
 }
 
 // TODO: this is still work in progress

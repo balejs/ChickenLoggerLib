@@ -42,18 +42,19 @@
 // @details you'll have to define CHICKEN_LOG_BACKTRACES for backtraces to be actually logged
 void logBacktrace();
 
-std::string logTime();
+const char * logTime();
 // Extracts the class name from a string generated with __PRETTY_FUNCTION__
+// Not used because caused stack overflows on esp32 for large programs
 std::string logClassnameOrFunction(const char * prettyfunc);
+
+#define __BASENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 // Log format
 #define CHICKEN_BASIC_LOG_FORMAT(letter, format) CHICKEN_LOG_COLOR_##letter #letter " [%s] %s: " format CHICKEN_LOG_COLOR_RESET
 
 // Logs without adding a newline, useful to begin a line with complex logging
 #define _log(type, format, ...) { \
-    auto __timeString = logTime(); \
-    auto __className = logClassnameOrFunction(__PRETTY_FUNCTION__); \
-    Logger::getLogger()->log(CHICKEN_BASIC_LOG_FORMAT(type, format), __timeString.c_str(), __className.c_str(), ##__VA_ARGS__); \
+    Logger::getLogger()->log(CHICKEN_BASIC_LOG_FORMAT(type, format), logTime(), __BASENAME__, ##__VA_ARGS__); \
 }
 
 // Appends to the current line. Does not append a '\n' automatically
