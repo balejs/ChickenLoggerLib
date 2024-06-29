@@ -50,11 +50,11 @@ std::string logClassnameOrFunction(const char * prettyfunc);
 #define __BASENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 // Log format
-#define CHICKEN_BASIC_LOG_FORMAT(letter, format) CHICKEN_LOG_COLOR_##letter #letter " [%s] %s: " format CHICKEN_LOG_COLOR_RESET
+#define CHICKEN_BASIC_LOG_FORMAT(letter, format) CHICKEN_LOG_COLOR_##letter #letter " [%s] %s:%d: " format CHICKEN_LOG_COLOR_RESET
 
 // Logs without adding a newline, useful to begin a line with complex logging
 #define _log(type, format, ...) { \
-    Logger::getLogger()->log(CHICKEN_BASIC_LOG_FORMAT(type, format), logTime(), __BASENAME__, ##__VA_ARGS__); \
+    Logger::getLogger()->log(CHICKEN_BASIC_LOG_FORMAT(type, format), logTime(), __BASENAME__, __LINE__, ##__VA_ARGS__); \
 }
 
 // Appends to the current line. Does not append a '\n' automatically
