@@ -3,6 +3,9 @@
 #include "esp_log.h"
 #elif defined(NATIVE_PLATFORM)
 #include <execinfo.h>
+#include <sys/time.h>
+#else
+#include <sys/time.h>
 #endif // NATIVE_PLATFORM
 
 #include <algorithm>
@@ -51,7 +54,7 @@ const char * logTime()
     struct tm currentLocalTime = *localtime(&tv.tv_sec);
 
     strftime(timeBuffer, 15, "%H:%M:%S.", &currentLocalTime);
-    snprintf(timeBuffer + 9, 4, "%03lu", tv.tv_usec / 1000);
+    snprintf(timeBuffer + 9, 4, "%03llu", (uint64_t)tv.tv_usec / 1000);
     return timeBuffer;
 }
 
